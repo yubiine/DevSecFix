@@ -1,0 +1,79 @@
+services:
+  frontend:
+    build:
+      context: ./frontend
+    container_name: devsecfix-frontend
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: ./backend
+    container_name: devsecfix-backend
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-devsecfix}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-devsecfix}
+      POSTGRES_DB: ${POSTGRES_DB:-devsecfix}
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-devsecfix}:${POSTGRES_PASSWORD:-devsecfix}@db:5432/${POSTGRES_DB:-devsecfix}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  db:
+    image: postgres:15
+    container_name: devsecfix-db
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-devsecfix}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-devsecfix}
+      POSTGRES_DB: ${POSTGRES_DB:-devsecfix}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-devsecfix} -d ${POSTGRES_DB:-devsecfix}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7
+    container_name: devsecfix-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  worker:
+    build:
+      context: ./backend
+    container_name: devsecfix-worker
+    command: celery -A main.celery_app worker --loglevel=info
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-devsecfix}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-devsecfix}
+      POSTGRES_DB: ${POSTGRES_DB:-devsecfix}
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-devsecfix}:${POSTGRES_PASSWORD:-devsecfix}@db:5432/${POSTGRES_DB:-devsecfix}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
