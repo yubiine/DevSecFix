@@ -4,7 +4,8 @@ from celery import Celery
 from fastapi import FastAPI
 from redis.asyncio import Redis
 
-from core.database import engine, metadata, settings
+from core.database import engine, settings
+from routers import auth, scan
 
 
 celery_app = Celery(
@@ -16,9 +17,6 @@ celery_app = Celery(
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    async with engine.begin() as conn:
-        await conn.run_sync(metadata.create_all)
-
     redis = Redis.from_url(settings.redis_url)
     await redis.ping()
     await redis.aclose()
@@ -29,6 +27,8 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="DevSecFix API", lifespan=lifespan)
+app.include_router(auth.router)
+app.include_router(scan.router)
 
 
 @app.get("/health")

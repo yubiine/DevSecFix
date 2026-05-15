@@ -1,5 +1,4 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from sqlalchemy import Column, DateTime, Integer, MetaData, Table, func
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
@@ -36,11 +35,3 @@ AsyncSessionLocal = sessionmaker(
     expire_on_commit=False,
 )
 Base = declarative_base()
-metadata = MetaData()
-
-health_checks = Table(
-    "health_checks",
-    metadata,
-    Column("id", Integer, primary_key=True),
-    Column("created_at", DateTime(timezone=True), server_default=func.now()),
-)

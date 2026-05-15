@@ -11,3 +11,4 @@ sslyze
 python-nmap
 requests
 pydantic-settings
+dnspython
