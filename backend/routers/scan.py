@@ -1,4 +1,4 @@
-from uuid import UUID
+from core.celery_app import celery_app
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
@@ -34,6 +34,7 @@ async def create_scan(
     await db.commit()
     await db.refresh(scan)
 
+    celery_app.send_task("tasks.run_scan", args=[str(scan.id)])
     return ScanResponse(
         taskId=scan.id,
         status=scan.status,
