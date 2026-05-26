@@ -8,7 +8,7 @@ from models.scan import Scan
 from tasks.header_check import run_header_check
 from tasks.port_scan import run_port_scan
 from tasks.ssl_check import run_ssl_check
-
+from tasks.snippet_mapper import get_scan_result_with_snippets
 
 # CVSS v3.1 기반 취약점 점수 매핑
 # 각 취약점 type에 점수를 부여합니다 (0.0 ~ 10.0)
@@ -99,6 +99,8 @@ async def _run_scan_async(scan_id: str):
             # 결과 합치기 + CVSS 점수 적용
             result = _merge_results(header_result, port_result, ssl_result)
 
+            result = await get_scan_result_with_snippets(db, result)
+            
             scan.status = "completed"
             scan.result = result
             await db.commit()
