@@ -391,9 +391,518 @@ server {
         "description": "CORS를 모든 출처(*)에 열면 다른 사이트에서 API를 무단으로 호출할 수 있습니다.",
         "reference_url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS",
     },
+
+# =====================
+    # 포트 취약점 스니펫
+    # =====================
+
+    # FTP (21번 포트)
+    {
+        "vuln_type": "open_ftp",
+        "severity": "high",
+        "cvss_score": 7.4,
+        "server_type": "linux",
+        "title": "FTP 포트 차단 (iptables)",
+        "code": """# 외부에서 FTP 접근 차단
+iptables -A INPUT -p tcp --dport 21 -j DROP
+
+# 특정 IP만 허용하려면
+# iptables -A INPUT -p tcp --dport 21 -s 허용할IP -j ACCEPT
+# iptables -A INPUT -p tcp --dport 21 -j DROP
+
+# 설정 저장
+service iptables save""",
+        "description": "FTP는 암호화되지 않아 데이터가 평문으로 전송됩니다. SFTP 또는 FTPS로 대체하거나 외부 접근을 차단하세요.",
+        "reference_url": "https://wiki.archlinux.org/title/iptables",
+    },
+
+    # SSH (22번 포트)
+    {
+        "vuln_type": "open_ssh",
+        "severity": "medium",
+        "cvss_score": 5.3,
+        "server_type": "linux",
+        "title": "SSH 접근 제한 (iptables)",
+        "code": """# 특정 IP만 SSH 허용 (권장)
+iptables -A INPUT -p tcp --dport 22 -s 허용할IP -j ACCEPT
+iptables -A INPUT -p tcp --dport 22 -j DROP
+
+# 또는 SSH 포트 변경 (/etc/ssh/sshd_config)
+# Port 2222  ← 기본 22에서 변경
+# service sshd restart""",
+        "description": "SSH가 외부에 노출되면 무차별 대입 공격에 취약합니다. 특정 IP만 허용하거나 포트를 변경하세요.",
+        "reference_url": "https://www.ssh.com/academy/ssh/port",
+    },
+
+    # Telnet (23번 포트)
+    {
+        "vuln_type": "open_telnet",
+        "severity": "high",
+        "cvss_score": 9.8,
+        "server_type": "linux",
+        "title": "Telnet 포트 차단 및 서비스 비활성화",
+        "code": """# Telnet 서비스 비활성화
+systemctl stop telnet
+systemctl disable telnet
+
+# 포트 차단
+iptables -A INPUT -p tcp --dport 23 -j DROP
+
+# 설정 저장
+service iptables save""",
+        "description": "Telnet은 암호화가 전혀 없어 매우 위험합니다. 즉시 비활성화하고 SSH로 대체하세요.",
+        "reference_url": "https://www.ssh.com/academy/ssh/telnet",
+    },
+
+    # MySQL (3306번 포트)
+    {
+        "vuln_type": "open_db",
+        "severity": "high",
+        "cvss_score": 9.8,
+        "server_type": "linux",
+        "title": "MySQL 외부 접근 차단",
+        "code": """# 외부에서 MySQL 접근 차단
+iptables -A INPUT -p tcp --dport 3306 -j DROP
+
+# 로컬호스트만 허용
+iptables -A INPUT -p tcp --dport 3306 -s 127.0.0.1 -j ACCEPT
+iptables -A INPUT -p tcp --dport 3306 -j DROP
+
+# MySQL 설정에서도 바인딩 제한 (/etc/mysql/mysql.conf.d/mysqld.cnf)
+# bind-address = 127.0.0.1""",
+        "description": "MySQL DB가 외부에 노출되면 데이터 유출 및 무단 접근 위험이 있습니다. 즉시 차단하세요.",
+        "reference_url": "https://dev.mysql.com/doc/refman/8.0/en/security-guidelines.html",
+    },
+
+    # PostgreSQL (5432번 포트)
+    {
+        "vuln_type": "open_db",
+        "severity": "high",
+        "cvss_score": 9.8,
+        "server_type": "linux",
+        "title": "PostgreSQL 외부 접근 차단",
+        "code": """# 외부에서 PostgreSQL 접근 차단
+iptables -A INPUT -p tcp --dport 5432 -j DROP
+
+# 로컬호스트만 허용
+iptables -A INPUT -p tcp --dport 5432 -s 127.0.0.1 -j ACCEPT
+iptables -A INPUT -p tcp --dport 5432 -j DROP
+
+# PostgreSQL 설정에서도 바인딩 제한 (postgresql.conf)
+# listen_addresses = 'localhost'""",
+        "description": "PostgreSQL DB가 외부에 노출되면 데이터 유출 및 무단 접근 위험이 있습니다. 즉시 차단하세요.",
+        "reference_url": "https://www.postgresql.org/docs/current/auth-pg-hba-conf.html",
+    },
+
+    # Redis (6379번 포트)
+    {
+        "vuln_type": "open_db",
+        "severity": "high",
+        "cvss_score": 9.8,
+        "server_type": "linux",
+        "title": "Redis 외부 접근 차단",
+        "code": """# 외부에서 Redis 접근 차단
+iptables -A INPUT -p tcp --dport 6379 -j DROP
+
+# Redis 설정에서도 바인딩 제한 (/etc/redis/redis.conf)
+# bind 127.0.0.1
+# requirepass 강력한패스워드""",
+        "description": "Redis가 외부에 노출되면 인증 없이 모든 데이터에 접근 가능합니다. 즉시 차단하세요.",
+        "reference_url": "https://redis.io/docs/manual/security/",
+    },
+
+    # MongoDB (27017번 포트)
+    {
+        "vuln_type": "open_db",
+        "severity": "high",
+        "cvss_score": 9.8,
+        "server_type": "linux",
+        "title": "MongoDB 외부 접근 차단",
+        "code": """# 외부에서 MongoDB 접근 차단
+iptables -A INPUT -p tcp --dport 27017 -j DROP
+
+# MongoDB 설정에서도 바인딩 제한 (/etc/mongod.conf)
+# net:
+#   bindIp: 127.0.0.1""",
+        "description": "MongoDB가 외부에 노출되면 인증 없이 데이터베이스에 접근 가능합니다. 즉시 차단하세요.",
+        "reference_url": "https://www.mongodb.com/docs/manual/administration/security-checklist/",
+    },
+
+    # RDP (3389번 포트)
+    {
+        "vuln_type": "open_rdp",
+        "severity": "high",
+        "cvss_score": 9.8,
+        "server_type": "linux",
+        "title": "RDP 포트 차단",
+        "code": """# 외부에서 RDP 접근 차단
+iptables -A INPUT -p tcp --dport 3389 -j DROP
+
+# 특정 IP만 허용하려면
+# iptables -A INPUT -p tcp --dport 3389 -s 허용할IP -j ACCEPT
+# iptables -A INPUT -p tcp --dport 3389 -j DROP
+
+# 설정 저장
+service iptables save""",
+        "description": "RDP가 외부에 노출되면 무차별 대입 공격 및 원격 코드 실행 취약점에 노출됩니다.",
+        "reference_url": "https://learn.microsoft.com/en-us/troubleshoot/windows-server/remote/set-up-remote-desktop-listener-port",
+    },
+
+    # VNC (5900번 포트)
+    {
+        "vuln_type": "open_vnc",
+        "severity": "high",
+        "cvss_score": 8.8,
+        "server_type": "linux",
+        "title": "VNC 포트 차단",
+        "code": """# 외부에서 VNC 접근 차단
+iptables -A INPUT -p tcp --dport 5900 -j DROP
+
+# VNC 사용이 필요하면 SSH 터널링 사용 권장
+# ssh -L 5900:localhost:5900 user@server
+# 그 후 localhost:5900 으로 접속""",
+        "description": "VNC가 외부에 노출되면 원격 데스크탑이 무단으로 접근될 수 있습니다.",
+        "reference_url": "https://www.realvnc.com/en/connect/docs/security.html",
+    },
+
+    # Elasticsearch (9200번 포트)
+    {
+        "vuln_type": "open_db",
+        "severity": "high",
+        "cvss_score": 9.8,
+        "server_type": "linux",
+        "title": "Elasticsearch 외부 접근 차단",
+        "code": """# 외부에서 Elasticsearch 접근 차단
+iptables -A INPUT -p tcp --dport 9200 -j DROP
+iptables -A INPUT -p tcp --dport 9300 -j DROP
+
+# Elasticsearch 설정에서도 바인딩 제한 (elasticsearch.yml)
+# network.host: 127.0.0.1""",
+        "description": "Elasticsearch가 외부에 노출되면 인증 없이 모든 데이터에 접근 가능합니다. 즉시 차단하세요.",
+        "reference_url": "https://www.elastic.co/guide/en/elasticsearch/reference/current/security-minimal-setup.html",
+    },
+# =====================
+    # SSL/TLS 취약점 스니펫
+    # =====================
+
+    # HTTPS 없음
+    {
+        "vuln_type": "no_https",
+        "severity": "high",
+        "cvss_score": 7.4,
+        "server_type": "nginx",
+        "title": "HTTPS 설정 (Nginx)",
+        "code": """# nginx.conf에 추가
+server {
+    listen 80;
+    server_name yourdomain.com;
+    # HTTP를 HTTPS로 리다이렉트
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    server_name yourdomain.com;
+
+    ssl_certificate /etc/ssl/certs/yourdomain.crt;
+    ssl_certificate_key /etc/ssl/private/yourdomain.key;
+
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+}""",
+        "description": "HTTPS는 데이터를 암호화하여 전송합니다. Let's Encrypt를 사용하면 무료로 SSL 인증서를 발급받을 수 있습니다.",
+        "reference_url": "https://letsencrypt.org/getting-started/",
+    },
+    {
+        "vuln_type": "no_https",
+        "severity": "high",
+        "cvss_score": 7.4,
+        "server_type": "apache",
+        "title": "HTTPS 설정 (Apache)",
+        "code": """# httpd.conf 또는 ssl.conf에 추가
+<VirtualHost *:80>
+    ServerName yourdomain.com
+    # HTTP를 HTTPS로 리다이렉트
+    Redirect permanent / https://yourdomain.com/
+</VirtualHost>
+
+<VirtualHost *:443>
+    ServerName yourdomain.com
+
+    SSLEngine on
+    SSLCertificateFile /etc/ssl/certs/yourdomain.crt
+    SSLCertificateKeyFile /etc/ssl/private/yourdomain.key
+
+    SSLProtocol TLSv1.2 TLSv1.3
+    SSLCipherSuite HIGH:!aNULL:!MD5
+</VirtualHost>""",
+        "description": "HTTPS는 데이터를 암호화하여 전송합니다. Let's Encrypt를 사용하면 무료로 SSL 인증서를 발급받을 수 있습니다.",
+        "reference_url": "https://letsencrypt.org/getting-started/",
+    },
+
+    # 인증서 만료
+    {
+        "vuln_type": "cert_expired",
+        "severity": "high",
+        "cvss_score": 7.4,
+        "server_type": "nginx",
+        "title": "SSL 인증서 갱신 (Let's Encrypt)",
+        "code": """# Certbot으로 인증서 갱신
+# Certbot 설치
+apt-get install certbot python3-certbot-nginx
+
+# 인증서 갱신
+certbot renew
+
+# 자동 갱신 설정 (crontab)
+# 0 0 * * * certbot renew --quiet && systemctl reload nginx""",
+        "description": "만료된 SSL 인증서는 브라우저에서 보안 경고를 표시합니다. 즉시 갱신하세요.",
+        "reference_url": "https://certbot.eff.org/",
+    },
+    {
+        "vuln_type": "cert_expired",
+        "severity": "high",
+        "cvss_score": 7.4,
+        "server_type": "apache",
+        "title": "SSL 인증서 갱신 (Let's Encrypt - Apache)",
+        "code": """# Certbot으로 인증서 갱신
+# Certbot 설치
+apt-get install certbot python3-certbot-apache
+
+# 인증서 갱신
+certbot renew
+
+# 자동 갱신 설정 (crontab)
+# 0 0 * * * certbot renew --quiet && systemctl reload apache2""",
+        "description": "만료된 SSL 인증서는 브라우저에서 보안 경고를 표시합니다. 즉시 갱신하세요.",
+        "reference_url": "https://certbot.eff.org/",
+    },
+
+    # 인증서 곧 만료
+    {
+        "vuln_type": "cert_expiring_soon",
+        "severity": "medium",
+        "cvss_score": 4.3,
+        "server_type": "nginx",
+        "title": "SSL 인증서 만료 임박 - 갱신 필요 (Nginx)",
+        "code": """# 인증서 만료일 확인
+openssl x509 -enddate -noout -in /etc/ssl/certs/yourdomain.crt
+
+# Certbot으로 미리 갱신
+certbot renew --force-renewal
+
+# 자동 갱신 설정 (만료 30일 전 자동 갱신)
+# crontab -e
+# 0 0 * * * certbot renew --quiet && systemctl reload nginx""",
+        "description": "인증서가 30일 이내에 만료됩니다. 미리 갱신하여 서비스 중단을 방지하세요.",
+        "reference_url": "https://certbot.eff.org/docs/using.html#renewing-certificates",
+    },
+    {
+        "vuln_type": "cert_expiring_soon",
+        "severity": "medium",
+        "cvss_score": 4.3,
+        "server_type": "apache",
+        "title": "SSL 인증서 만료 임박 - 갱신 필요 (Apache)",
+        "code": """# 인증서 만료일 확인
+openssl x509 -enddate -noout -in /etc/ssl/certs/yourdomain.crt
+
+# Certbot으로 미리 갱신
+certbot renew --force-renewal
+
+# 자동 갱신 설정
+# crontab -e
+# 0 0 * * * certbot renew --quiet && systemctl reload apache2""",
+        "description": "인증서가 30일 이내에 만료됩니다. 미리 갱신하여 서비스 중단을 방지하세요.",
+        "reference_url": "https://certbot.eff.org/docs/using.html#renewing-certificates",
+    },
+
+    # 취약한 TLS 버전
+    {
+        "vuln_type": "weak_protocol",
+        "severity": "high",
+        "cvss_score": 7.4,
+        "server_type": "nginx",
+        "title": "취약한 TLS 버전 비활성화 (Nginx)",
+        "code": """# nginx.conf에 추가
+server {
+    listen 443 ssl;
+
+    # TLS 1.2, 1.3만 허용 (1.0, 1.1 비활성화)
+    ssl_protocols TLSv1.2 TLSv1.3;
+
+    # 강력한 암호화 설정
+    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384;
+    ssl_prefer_server_ciphers off;
+}""",
+        "description": "TLS 1.0, 1.1은 취약점이 발견되어 deprecated 되었습니다. TLS 1.2 이상만 허용하세요.",
+        "reference_url": "https://nginx.org/en/docs/http/ngx_http_ssl_module.html",
+    },
+    {
+        "vuln_type": "weak_protocol",
+        "severity": "high",
+        "cvss_score": 7.4,
+        "server_type": "apache",
+        "title": "취약한 TLS 버전 비활성화 (Apache)",
+        "code": """# httpd.conf 또는 ssl.conf에 추가
+<VirtualHost *:443>
+    # TLS 1.2, 1.3만 허용
+    SSLProtocol -all +TLSv1.2 +TLSv1.3
+
+    # 강력한 암호화 설정
+    SSLCipherSuite ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256
+    SSLHonorCipherOrder off
+</VirtualHost>""",
+        "description": "TLS 1.0, 1.1은 취약점이 발견되어 deprecated 되었습니다. TLS 1.2 이상만 허용하세요.",
+        "reference_url": "https://httpd.apache.org/docs/current/ssl/ssl_howto.html",
+    },
+
+    # 취약한 암호화
+    {
+        "vuln_type": "weak_cipher",
+        "severity": "high",
+        "cvss_score": 7.4,
+        "server_type": "nginx",
+        "title": "취약한 암호화 방식 비활성화 (Nginx)",
+        "code": """# nginx.conf에 추가
+server {
+    listen 443 ssl;
+
+    # 강력한 암호화만 허용 (RC4, DES, MD5 제외)
+    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:!RC4:!DES:!3DES:!MD5:!aNULL;
+    ssl_prefer_server_ciphers off;
+}""",
+        "description": "RC4, DES, MD5 등 취약한 암호화 방식은 데이터 복호화 공격에 취약합니다.",
+        "reference_url": "https://nginx.org/en/docs/http/ngx_http_ssl_module.html#ssl_ciphers",
+    },
+    {
+        "vuln_type": "weak_cipher",
+        "severity": "high",
+        "cvss_score": 7.4,
+        "server_type": "apache",
+        "title": "취약한 암호화 방식 비활성화 (Apache)",
+        "code": """# httpd.conf 또는 ssl.conf에 추가
+<VirtualHost *:443>
+    # 강력한 암호화만 허용
+    SSLCipherSuite ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:!RC4:!DES:!3DES:!MD5:!aNULL
+    SSLHonorCipherOrder off
+</VirtualHost>""",
+        "description": "RC4, DES, MD5 등 취약한 암호화 방식은 데이터 복호화 공격에 취약합니다.",
+        "reference_url": "https://httpd.apache.org/docs/current/ssl/ssl_howto.html",
+    },
+
+    # 자체 서명 인증서
+    {
+        "vuln_type": "self_signed_cert",
+        "severity": "high",
+        "cvss_score": 6.8,
+        "server_type": "nginx",
+        "title": "공인 SSL 인증서 발급 (Let's Encrypt)",
+        "code": """# Let's Encrypt 무료 인증서 발급
+# Certbot 설치
+apt-get install certbot python3-certbot-nginx
+
+# 인증서 발급 (도메인 입력)
+certbot --nginx -d yourdomain.com -d www.yourdomain.com
+
+# 자동 갱신 설정
+echo "0 0 * * * certbot renew --quiet" | crontab -""",
+        "description": "자체 서명 인증서는 신뢰할 수 없어 브라우저에서 경고를 표시합니다. Let's Encrypt로 무료 공인 인증서를 발급받으세요.",
+        "reference_url": "https://certbot.eff.org/",
+    },
+    {
+        "vuln_type": "self_signed_cert",
+        "severity": "high",
+        "cvss_score": 6.8,
+        "server_type": "apache",
+        "title": "공인 SSL 인증서 발급 (Let's Encrypt - Apache)",
+        "code": """# Let's Encrypt 무료 인증서 발급
+# Certbot 설치
+apt-get install certbot python3-certbot-apache
+
+# 인증서 발급
+certbot --apache -d yourdomain.com -d www.yourdomain.com
+
+# 자동 갱신 설정
+echo "0 0 * * * certbot renew --quiet" | crontab -""",
+        "description": "자체 서명 인증서는 신뢰할 수 없어 브라우저에서 경고를 표시합니다. Let's Encrypt로 무료 공인 인증서를 발급받으세요.",
+        "reference_url": "https://certbot.eff.org/",
+    },
+
+    # SHA-1 서명
+    {
+        "vuln_type": "sha1_signature",
+        "severity": "high",
+        "cvss_score": 5.9,
+        "server_type": "nginx",
+        "title": "SHA-256 인증서로 재발급",
+        "code": """# SHA-256으로 새 인증서 생성
+openssl req -new -sha256 -key yourdomain.key -out yourdomain.csr
+
+# Let's Encrypt 사용 시 자동으로 SHA-256 적용
+certbot --nginx -d yourdomain.com
+
+# 현재 인증서 서명 알고리즘 확인
+openssl x509 -noout -text -in yourdomain.crt | grep "Signature Algorithm" """,
+        "description": "SHA-1은 충돌 공격에 취약합니다. SHA-256 이상의 인증서로 재발급받으세요.",
+        "reference_url": "https://letsencrypt.org/docs/glossary/",
+    },
+    {
+        "vuln_type": "sha1_signature",
+        "severity": "high",
+        "cvss_score": 5.9,
+        "server_type": "apache",
+        "title": "SHA-256 인증서로 재발급 (Apache)",
+        "code": """# SHA-256으로 새 인증서 생성
+openssl req -new -sha256 -key yourdomain.key -out yourdomain.csr
+
+# Let's Encrypt 사용 시 자동으로 SHA-256 적용
+certbot --apache -d yourdomain.com
+
+# 현재 인증서 서명 알고리즘 확인
+openssl x509 -noout -text -in yourdomain.crt | grep "Signature Algorithm" """,
+        "description": "SHA-1은 충돌 공격에 취약합니다. SHA-256 이상의 인증서로 재발급받으세요.",
+        "reference_url": "https://letsencrypt.org/docs/glossary/",
+    },
+
+    # RSA 키 길이 부족
+    {
+        "vuln_type": "weak_key_size",
+        "severity": "high",
+        "cvss_score": 5.9,
+        "server_type": "nginx",
+        "title": "RSA 키 길이 2048bit 이상으로 재발급",
+        "code": """# 2048bit RSA 키 생성
+openssl genrsa -out yourdomain.key 2048
+
+# 또는 더 강력한 4096bit
+openssl genrsa -out yourdomain.key 4096
+
+# CSR 생성
+openssl req -new -sha256 -key yourdomain.key -out yourdomain.csr
+
+# Let's Encrypt 사용 시 자동으로 2048bit 적용
+certbot --nginx -d yourdomain.com""",
+        "description": "RSA 키 길이가 2048bit 미만이면 브루트포스 공격에 취약합니다. 2048bit 이상으로 재발급받으세요.",
+        "reference_url": "https://www.keylength.com/en/4/",
+    },
+    {
+        "vuln_type": "weak_key_size",
+        "severity": "high",
+        "cvss_score": 5.9,
+        "server_type": "apache",
+        "title": "RSA 키 길이 2048bit 이상으로 재발급 (Apache)",
+        "code": """# 2048bit RSA 키 생성
+openssl genrsa -out yourdomain.key 2048
+
+# CSR 생성
+openssl req -new -sha256 -key yourdomain.key -out yourdomain.csr
+
+# Let's Encrypt 사용 시 자동으로 2048bit 적용
+certbot --apache -d yourdomain.com""",
+        "description": "RSA 키 길이가 2048bit 미만이면 브루트포스 공격에 취약합니다. 2048bit 이상으로 재발급받으세요.",
+        "reference_url": "https://www.keylength.com/en/4/",
+    },
 ]
-
-
 async def insert_snippets():
     async with AsyncSessionLocal() as db:
         for data in SNIPPETS:
