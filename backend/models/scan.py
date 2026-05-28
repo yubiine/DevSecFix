@@ -1,8 +1,9 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Column, DateTime, String
+from sqlalchemy import Column, DateTime, Numeric, String
 from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.orm import relationship
 
 from core.database import Base
 
@@ -15,10 +16,18 @@ class Scan(Base):
     domain = Column(String(255), nullable=False, index=True)
     status = Column(String(20), nullable=False, default="pending")
     result = Column(JSONB, nullable=True)
+    security_grade = Column(String(1), nullable=True)
+    total_score = Column(Numeric(4, 1), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(
         DateTime,
         default=datetime.utcnow,
         onupdate=datetime.utcnow,
         nullable=False,
+    )
+
+    vulnerabilities = relationship(
+        "Vulnerability",
+        back_populates="scan",
+        cascade="all, delete-orphan",
     )
