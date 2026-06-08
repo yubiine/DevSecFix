@@ -13,3 +13,5 @@ python-nmap
 requests
 pydantic-settings
 dnspython
+google-generativeai
+openai
