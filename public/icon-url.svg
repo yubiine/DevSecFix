@@ -1,0 +1,9 @@
+<svg width="128" height="96" viewBox="0 0 128 96" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="g" x1="18" y1="20" x2="110" y2="76" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#c9c2ff"/>
+      <stop offset="1" stop-color="#f6a4df"/>
+    </linearGradient>
+  </defs>
+  <text x="64" y="60" text-anchor="middle" font-family="Consolas, monospace" font-size="36" font-weight="800" letter-spacing="5" fill="url(#g)">URL</text>
+</svg>
