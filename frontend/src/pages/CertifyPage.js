@@ -71,12 +71,16 @@ function CertifyPage() {
         body: JSON.stringify({ domain }),
       });
 
-      if (!response.ok) throw new Error('verification confirm failed');
-    } catch {
-      setMessage('데모 환경에서는 로컬에서 인증 완료로 처리합니다.');
-    } finally {
+      if (!response.ok) {
+        const error = await response.json().catch(() => null);
+        throw new Error(error?.detail || '도메인에 인증 토큰이 등록되지 않았습니다.');
+      }
+
       saveVerifiedDomain(domain);
       setStep(3);
+    } catch (error) {
+      setMessage(error.message || '도메인 인증 확인에 실패했습니다.');
+    } finally {
       setLoading(false);
     }
   };

@@ -190,6 +190,55 @@
   cursor: pointer;
 }
 
+.segmented button,
+.primary-action,
+.ghost-action,
+.report-action {
+  position: relative;
+  overflow: hidden;
+  min-height: 48px;
+  border-radius: 8px;
+  font-weight: 850;
+  letter-spacing: 0.02em;
+  transition:
+    border-color 160ms ease,
+    color 160ms ease,
+    background-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.primary-action,
+.report-action {
+  border: 1px solid rgba(184, 247, 230, 0.58);
+  color: var(--cyan);
+  background:
+    linear-gradient(135deg, rgba(246, 164, 223, 0.12), rgba(184, 247, 230, 0.08)),
+    rgba(8, 9, 16, 0.78);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.025),
+    0 0 22px rgba(184, 247, 230, 0.08);
+}
+
+.segmented button:hover,
+.primary-action:hover,
+.ghost-action:hover,
+.report-action:hover {
+  transform: translateY(-1px);
+  border-color: var(--cyan);
+  color: var(--text);
+  background-color: rgba(184, 247, 230, 0.08);
+  box-shadow: 0 0 24px rgba(246, 164, 223, 0.14);
+}
+
+.segmented button:focus-visible,
+.primary-action:focus-visible,
+.ghost-action:focus-visible,
+.report-action:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 3px;
+}
+
 .segmented .selected {
   border-color: var(--line-strong);
   color: var(--cyan);
@@ -203,9 +252,11 @@
   cursor: pointer;
 }
 
-.primary-action:disabled {
+.primary-action:disabled,
+.report-action:disabled {
   cursor: progress;
   opacity: 0.7;
+  transform: none;
 }
 
 .token-box,
@@ -483,6 +534,7 @@
 
 .report-metrics button {
   min-width: 150px;
+  align-self: stretch;
 }
 
 .finding-list h2 {

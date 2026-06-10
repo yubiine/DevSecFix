@@ -171,7 +171,9 @@ function ResultPage() {
             <b>{report.falsePositiveRisk || 'LOW'}</b>
             <span>오탐 가능성</span>
           </article>
-          <button type="button" onClick={() => window.print()}>PDF 저장</button>
+          <button className="report-action" type="button" onClick={() => window.print()}>
+            PDF 저장
+          </button>
         </section>
 
         <section className="finding-list">

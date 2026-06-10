@@ -26,6 +26,16 @@ function normalizeDomain(value) {
     .split(':')[0];
 }
 
+function removeVerifiedDomain(domain) {
+  try {
+    const previous = JSON.parse(localStorage.getItem('devsecfix:verifiedDomains') || '[]');
+    const next = previous.filter((verifiedDomain) => verifiedDomain !== domain);
+    localStorage.setItem('devsecfix:verifiedDomains', JSON.stringify(next));
+  } catch {
+    localStorage.removeItem('devsecfix:verifiedDomains');
+  }
+}
+
 function IconTile({ type }) {
   const iconSrc = type === 'search' ? '/icon-scan.svg' : '/icon-certify.svg';
   return (
@@ -81,6 +91,7 @@ function MainPage() {
       });
 
       if (response.status === 403) {
+        removeVerifiedDomain(cleanDomain);
         setError('아직 인증되지 않은 도메인입니다. 도메인 인증을 먼저 진행해 주세요.');
         return;
       }
@@ -100,6 +111,14 @@ function MainPage() {
 
   return (
     <div className="product-shell">
+      <div className="ambient-grid" aria-hidden="true" />
+      <div className="signal-ribbon signal-ribbon-top" aria-hidden="true">
+        <span>FREQ. ANALYZING</span>
+        <i />
+        <b>SYSTEM SECURED &amp; VERIFIED</b>
+        <i />
+        <span>DATA STREAM</span>
+      </div>
       <header className="app-topbar art-nav">
         <button className="brand" type="button" onClick={() => navigate('/')}>
           <span>DevSecFix</span>
@@ -235,6 +254,13 @@ function MainPage() {
         </div>
         <p>학생 2인 프로젝트 · Frontend / Backend · Authorized Web Security Checkup</p>
       </footer>
+      <div className="signal-ribbon signal-ribbon-bottom" aria-hidden="true">
+        <span>LOGGING ACTIVE</span>
+        <i />
+        <b>VIBRANT FIXING</b>
+        <i />
+        <span>REPORT STREAM</span>
+      </div>
     </div>
   );
 }
