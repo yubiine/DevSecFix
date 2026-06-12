@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     postgres_port: int = 5432
     database_url: str | None = None
     redis_url: str = "redis://redis:6379/0"
+    celery_broker_url: str | None = None
+    celery_result_backend: str | None = None
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
@@ -24,6 +26,14 @@ class Settings(BaseSettings):
             f"{self.postgres_user}:{self.postgres_password}"
             f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
         )
+
+    @property
+    def resolved_celery_broker_url(self) -> str:
+        return self.celery_broker_url or self.redis_url
+
+    @property
+    def resolved_celery_result_backend(self) -> str:
+        return self.celery_result_backend or self.redis_url
 
 
 settings = Settings()

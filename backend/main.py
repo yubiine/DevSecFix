@@ -1,18 +1,11 @@
 from contextlib import asynccontextmanager
 
-from celery import Celery
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from redis.asyncio import Redis
 
 from core.database import engine, settings
-from routers import auth, scan
-
-
-celery_app = Celery(
-    "devsecfix",
-    broker=settings.redis_url,
-    backend=settings.redis_url,
-)
+from routers import auth, report, scan
 
 
 @asynccontextmanager
@@ -27,10 +20,21 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="DevSecFix API", lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.include_router(auth.router)
 app.include_router(scan.router)
+app.include_router(report.router)
 
 
 @app.get("/health")
 async def health_check():
     return {"status": "ok"}
+
