@@ -59,6 +59,13 @@ const sampleReport = {
 };
 
 const severityOrder = { critical: 4, high: 3, medium: 2, low: 1, info: 0 };
+const severityLabel = {
+  critical: '긴급',
+  high: '높음',
+  medium: '보통',
+  low: '낮음',
+  info: '정보',
+};
 
 function ResultPage() {
   const { taskId } = useParams();
@@ -129,6 +136,7 @@ function ResultPage() {
         </button>
         <nav aria-label="Primary navigation">
           <button type="button" onClick={() => navigate('/')}>스캔</button>
+          <button type="button" onClick={() => navigate('/dashboard')}>대시보드</button>
           <button type="button" className="is-active">리포트</button>
         </nav>
       </header>
@@ -149,8 +157,12 @@ function ResultPage() {
             )}
           </div>
           <div className="score-orb">
-            <strong>{report.securityGrade || '?'}</strong>
-            <span>{report.totalScore || 0}/100</span>
+            <div className="score-glass">
+              <span>SECURITY GRADE</span>
+              <strong>{report.securityGrade || '?'}</strong>
+              <small>{report.totalScore || 0} / 100</small>
+            </div>
+            <p>전반적인 보안 상태</p>
           </div>
         </section>
 
@@ -171,8 +183,10 @@ function ResultPage() {
             <b>{report.falsePositiveRisk || 'LOW'}</b>
             <span>오탐 가능성</span>
           </article>
-          <button className="report-action" type="button" onClick={() => window.print()}>
-            PDF 저장
+          <button className="pdf-action" type="button" onClick={() => window.print()}>
+            <span>PDF</span>
+            <strong>리포트 저장</strong>
+            <b>↓</b>
           </button>
         </section>
 
@@ -186,9 +200,15 @@ function ResultPage() {
                   <h3>{vulnerability.title}</h3>
                   <p>{vulnerability.detail}</p>
                 </div>
-                <b className={`severity ${vulnerability.severity || 'info'}`}>
-                  {(vulnerability.severity || 'info').toUpperCase()} / CVSS {vulnerability.cvssScore || '-'}
-                </b>
+                <div className={`risk-summary ${vulnerability.severity || 'info'}`}>
+                  <span>위험도</span>
+                  <strong>{severityLabel[vulnerability.severity] || '정보'}</strong>
+                  <div>
+                    <small>CVSS</small>
+                    <b>{vulnerability.cvssScore || '-'}</b>
+                    <i style={{ '--risk-score': `${(vulnerability.cvssScore || 0) * 10}%` }} />
+                  </div>
+                </div>
               </div>
 
               {(vulnerability.snippets?.length > 0 || vulnerability.snippet) && (
@@ -196,11 +216,22 @@ function ResultPage() {
                   {(vulnerability.snippets || [vulnerability.snippet]).map((snippet, snippetIndex) => (
                     <div className="snippet-card" key={`${snippet.title}-${snippetIndex}`}>
                       <div className="snippet-header-row">
-                        <span>{snippet.serverType?.toUpperCase() || 'CONFIG'}</span>
+                        <span className="server-label">{snippet.serverType?.toUpperCase() || 'CONFIG'}</span>
                         {snippet.source === 'llm' && <span className="ai-source-badge">AI 생성</span>}
                       </div>
-                      <strong>{snippet.title}</strong>
-                      <pre>{snippet.code}</pre>
+                      <div className="snippet-title-row">
+                        <div>
+                          <small>추천 설정</small>
+                          <strong>{snippet.title}</strong>
+                        </div>
+                        <button type="button" onClick={() => navigator.clipboard?.writeText(snippet.code)}>
+                          코드 복사
+                        </button>
+                      </div>
+                      <div className="code-window">
+                        <div className="code-window-bar"><i /><i /><i /><span>{snippet.serverType || 'config'}.conf</span></div>
+                        <pre>{snippet.code}</pre>
+                      </div>
                       {snippet.warning && <small>{snippet.warning}</small>}
                     </div>
                   ))}
