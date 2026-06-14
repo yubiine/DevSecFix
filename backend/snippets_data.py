@@ -906,7 +906,12 @@ certbot --apache -d yourdomain.com""",
 async def insert_snippets():
     async with AsyncSessionLocal() as db:
         for data in SNIPPETS:
-            snippet = Snippet(**data)
+            snippet = Snippet(
+                vuln_type=data["vuln_type"],
+                server_type=data["server_type"],
+                title=data["title"],
+                code=data["code"],
+            )
             db.add(snippet)
         await db.commit()
         print(f"총 {len(SNIPPETS)}개 스니펫 삽입 완료!")

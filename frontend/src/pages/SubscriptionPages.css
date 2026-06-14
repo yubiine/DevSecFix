@@ -38,3 +38,11 @@ button { cursor: pointer; }
 
 @media(max-width:1000px){.service-frame{grid-template-columns:1fr}.service-sidebar{min-height:auto}.service-sidebar nav{grid-template-columns:repeat(5,1fr)}.service-sidebar nav button{grid-template-columns:1fr;justify-items:center;text-align:center}.workspace-label,.sidebar-plan{display:none}.dashboard-grid,.dashboard-columns,.settings-layout,.account-layout{grid-template-columns:1fr}.login-layout{grid-template-columns:1fr}.login-story{min-height:600px}.channel-grid{grid-template-columns:1fr}}
 @media(max-width:680px){.login-layout,.service-frame,.service-topbar{width:min(100% - 24px,1380px)}.login-story{padding:28px;min-height:620px}.login-story h1{font-size:48px}.login-mascot{width:240px}.login-benefits{left:28px;bottom:24px;width:calc(100% - 56px)}.service-sidebar nav{grid-template-columns:repeat(3,1fr)}.service-heading{padding:24px}.service-heading>img{width:110px;height:130px;opacity:.6}.dashboard-grid,.condition-list,.frequency-picker,.schedule-form,.account-fields{grid-template-columns:1fr}.service-account>button:first-child{display:none}.profile-overview{grid-template-columns:58px minmax(0,1fr)}.profile-avatar{width:58px;height:58px}.profile-overview>b{grid-column:1/-1;justify-self:start}}
+
+/* Final presentation readability */
+.service-heading div>p:not(.eyebrow),.setting-head p{font-size:12px;line-height:1.6}
+.change-list strong,.alert-timeline strong,.quick-account-menu strong{font-size:11px}
+.change-list span,.alert-timeline span,.condition-list span,.channel-card p,.notification-preview small,.quick-account-menu small{font-size:9px;line-height:1.5}
+.next-scan-card small,.certificate-card small,.next-run small,.workspace-summary>small{font-size:9px}
+.panel-link,.channel-card button,.next-scan-card button{min-height:36px;font-size:10px}
+.schedule-form select:disabled{color:#9aa7ba;background:#f1f4f8;cursor:not-allowed}

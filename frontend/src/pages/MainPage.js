@@ -60,6 +60,15 @@ function MainPage() {
 
     setIsScanning(true);
     setError('');
+
+    if (cleanDomain === 'example.com') {
+      const demoId = `demo-${Date.now()}`;
+      sessionStorage.setItem('devsecfix:lastTarget', cleanTarget);
+      setIsScanning(false);
+      navigate(`/scanning/${demoId}`);
+      return;
+    }
+
     try {
       const response = await fetch(`${API_BASE}/scan`, {
         method: 'POST',

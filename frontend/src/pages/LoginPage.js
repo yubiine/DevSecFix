@@ -30,7 +30,7 @@ function LoginPage() {
           <span className="soft-label">{mode === 'login' ? '계정 로그인' : '무료 계정 만들기'}</span>
           <h2>{mode === 'login' ? '다시 만나서 반가워요' : '지속적인 보안 관리를 시작해요'}</h2>
           <p>{mode === 'login' ? '내 도메인의 최신 보안 상태를 확인해 보세요.' : '계정을 만든 뒤 도메인을 인증하고 자동 스캔을 설정할 수 있습니다.'}</p>
-          {mode === 'signup' && <label><span>워크스페이스 이름</span><input defaultValue="DevSecFix Team" /></label>}
+          {mode === 'signup' && <label><span>이름</span><input defaultValue="이은빈" /></label>}
           <label><span>이메일</span><input value={email} onChange={(event) => setEmail(event.target.value)} type="email" /></label>
           <label><span>비밀번호</span><input value={password} onChange={(event) => setPassword(event.target.value)} type="password" /></label>
           {mode === 'signup' && <label><span>비밀번호 확인</span><input defaultValue={password} type="password" /></label>}

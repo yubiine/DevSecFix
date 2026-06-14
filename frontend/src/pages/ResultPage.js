@@ -73,6 +73,7 @@ function ResultPage() {
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(true);
   const [demoMode, setDemoMode] = useState(false);
+  const [copiedKey, setCopiedKey] = useState('');
 
   useEffect(() => {
     const loadReport = async () => {
@@ -114,6 +115,12 @@ function ResultPage() {
       return snippets.some((s) => s?.source === 'llm');
     });
   }, [vulnerabilities]);
+
+  const copyCode = async (code, key) => {
+    await navigator.clipboard?.writeText(code);
+    setCopiedKey(key);
+    window.setTimeout(() => setCopiedKey(''), 1800);
+  };
 
   if (loading) {
     return (
@@ -213,7 +220,9 @@ function ResultPage() {
 
               {(vulnerability.snippets?.length > 0 || vulnerability.snippet) && (
                 <div className="snippet-grid">
-                  {(vulnerability.snippets || [vulnerability.snippet]).map((snippet, snippetIndex) => (
+                  {(vulnerability.snippets || [vulnerability.snippet]).map((snippet, snippetIndex) => {
+                    const copyKey = `${index}-${snippetIndex}`;
+                    return (
                     <div className="snippet-card" key={`${snippet.title}-${snippetIndex}`}>
                       <div className="snippet-header-row">
                         <span className="server-label">{snippet.serverType?.toUpperCase() || 'CONFIG'}</span>
@@ -224,8 +233,8 @@ function ResultPage() {
                           <small>추천 설정</small>
                           <strong>{snippet.title}</strong>
                         </div>
-                        <button type="button" onClick={() => navigator.clipboard?.writeText(snippet.code)}>
-                          코드 복사
+                        <button type="button" onClick={() => copyCode(snippet.code, copyKey)}>
+                          {copiedKey === copyKey ? '복사 완료' : '코드 복사'}
                         </button>
                       </div>
                       <div className="code-window">
@@ -234,7 +243,8 @@ function ResultPage() {
                       </div>
                       {snippet.warning && <small>{snippet.warning}</small>}
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </article>

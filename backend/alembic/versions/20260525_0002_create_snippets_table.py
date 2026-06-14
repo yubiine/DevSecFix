@@ -20,16 +20,13 @@ def upgrade() -> None:
     op.create_table(
         "snippets",
         sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column("vuln_type", sa.String(length=100), nullable=False),
-        sa.Column("severity", sa.String(length=20), nullable=False),
-        sa.Column("cvss_score", sa.Float(), nullable=False),
+        sa.Column("vuln_type", sa.String(length=50), nullable=False),
         sa.Column("server_type", sa.String(length=20), nullable=False),
         sa.Column("title", sa.String(length=200), nullable=False),
         sa.Column("code", sa.Text(), nullable=False),
-        sa.Column("description", sa.Text(), nullable=False),
-        sa.Column("reference_url", sa.String(length=500), nullable=True),
         sa.Column("created_at", sa.DateTime(), nullable=False),
         sa.PrimaryKeyConstraint("id"),
+        sa.UniqueConstraint("vuln_type", "server_type", name="uq_snippets_vuln_server"),
     )
     op.create_index(op.f("ix_snippets_vuln_type"), "snippets", ["vuln_type"], unique=False)
 

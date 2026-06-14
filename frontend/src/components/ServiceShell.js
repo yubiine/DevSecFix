@@ -20,13 +20,15 @@ function ServiceShell({ children, title, description, mascot = '/ppt-mascot-poin
         <button className="brand" type="button" onClick={() => navigate('/')}><span>DevSecFix</span></button>
         <div className="service-account">
           <button type="button" onClick={() => navigate('/')}>수동 스캔</button>
-          <button type="button" className={`account-chip ${location.pathname === '/account' ? 'active' : ''}`} onClick={() => navigate('/account')} title="내 계정"><span>EB</span><strong>은빈 님</strong></button>
+          <button type="button" className={`account-chip ${location.pathname === '/account' ? 'active' : ''}`} onClick={() => navigate('/account')} title="내 계정">
+            <span>EB</span><strong>은빈 님</strong>
+          </button>
         </div>
       </header>
       <div className="service-frame">
         <aside className="service-sidebar">
-          <div className="workspace-label"><span>내 워크스페이스</span><strong>DevSecFix Team</strong></div>
-          <nav aria-label="Service navigation">
+          <div className="workspace-label"><span>내 서비스</span><strong>DevSecFix</strong></div>
+          <nav aria-label="서비스 메뉴">
             {items.map((item) => (
               <button type="button" key={item.path} className={location.pathname === item.path ? 'active' : ''} onClick={() => navigate(item.path)}>
                 <img src={item.icon} alt="" /><span>{item.label}</span>

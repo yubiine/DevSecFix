@@ -6,7 +6,16 @@ from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from core.database import Base, settings
-from models import Scan, Snippet, Verification, Vulnerability  # noqa: F401
+from models import (  # noqa: F401
+    NotificationLog,
+    NotificationSetting,
+    Scan,
+    ScanSchedule,
+    Snippet,
+    User,
+    Verification,
+    Vulnerability,
+)
 
 config = context.config
 config.set_main_option("sqlalchemy.url", settings.resolved_database_url)
