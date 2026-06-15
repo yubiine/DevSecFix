@@ -15,26 +15,39 @@ function ServiceShell({ children, title, description, mascot = '/ppt-mascot-poin
   const navigate = useNavigate();
   const location = useLocation();
   const [user, setUser] = useState(null);
+  const [latestScanId, setLatestScanId] = useState(null);
 
   useEffect(() => {
-    const fetchUser = async () => {
+    const fetchData = async () => {
       const token = localStorage.getItem('accessToken');
       if (!token) {
         navigate('/login');
         return;
       }
       try {
-        const response = await api.get('/auth/me');
-        setUser(response.data);
+        const userResponse = await api.get('/auth/me');
+        setUser(userResponse.data);
       } catch (err) {
         console.error('세션 검증 실패:', err);
         // api.js 인터셉터가 토큰 갱신 실패 시 이미 로그인창으로 보내주지만 안전장치로 추가
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
         navigate('/login');
+        return;
+      }
+
+      try {
+        // 대시보드 API를 통해 가장 최근의 완료된 스캔 ID를 획득
+        const summaryResponse = await api.get('/dashboard/summary');
+        const doneScans = summaryResponse.data.recentScans?.filter(s => s.grade !== null) || [];
+        if (doneScans.length > 0) {
+          setLatestScanId(doneScans[0].scanId);
+        }
+      } catch (err) {
+        console.error('사이드바 최신 스캔 조회 실패:', err);
       }
     };
-    fetchUser();
+    fetchData();
   }, [navigate]);
 
   // 이름 첫 글자 따기 (예: "이은빈" -> "이", "Test User" -> "T")
@@ -63,11 +76,28 @@ function ServiceShell({ children, title, description, mascot = '/ppt-mascot-poin
         <aside className="service-sidebar">
           <div className="workspace-label"><span>내 서비스</span><strong>DevSecFix</strong></div>
           <nav aria-label="서비스 메뉴">
-            {items.map((item) => (
-              <button type="button" key={item.path} className={location.pathname === item.path ? 'active' : ''} onClick={() => navigate(item.path)}>
-                <img src={item.icon} alt="" /><span>{item.label}</span>
-              </button>
-            ))}
+            {items.map((item) => {
+              const isActive = location.pathname === item.path || 
+                (item.path === '/result/demo' && location.pathname.startsWith('/result/'));
+              
+              const handleClick = () => {
+                if (item.path === '/result/demo') {
+                  if (latestScanId) {
+                    navigate(`/result/${latestScanId}`);
+                  } else {
+                    navigate('/result/demo');
+                  }
+                } else {
+                  navigate(item.path);
+                }
+              };
+
+              return (
+                <button type="button" key={item.path} className={isActive ? 'active' : ''} onClick={handleClick}>
+                  <img src={item.icon} alt="" /><span>{item.label}</span>
+                </button>
+              );
+            })}
           </nav>
           <div className="sidebar-plan"><img src="/ppt-mascot-shield.png" alt="" /><span>현재 플랜</span><strong>Starter</strong><small>도메인 1개 · 주간 스캔</small></div>
         </aside>

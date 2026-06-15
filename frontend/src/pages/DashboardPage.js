@@ -186,7 +186,7 @@ function DashboardPage() {
                 )}
               </div>
               {latestScanDetail && (
-                <button type="button" className="panel-link" onClick={() => navigate(`/result/${latestScanDetail.scanId}`)}>
+                <button type="button" className="panel-link" onClick={() => navigate(`/result/${latestScanDetail.taskId}`)}>
                   전체 리포트 확인 →
                 </button>
               )}
