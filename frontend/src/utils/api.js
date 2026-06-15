@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-// 백엔드 URL 설정 (환경변수 권장: process.env.REACT_APP_API_URL)
-const API_BASE_URL = 'http://localhost:8000';
+// 백엔드 URL 설정 (환경변수 권장: process.env.REACT_APP_API_BASE)
+const API_BASE_URL = process.env.REACT_APP_API_BASE || 'http://localhost:8000';
 
 // Axios 인스턴스 생성
 const api = axios.create({
