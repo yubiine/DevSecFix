@@ -1,7 +1,7 @@
 """add vulnerabilities snippets grade
 
 Revision ID: 20260528_0002
-Revises: 20260515_0001
+Revises: 20260525_0002
 Create Date: 2026-05-28 00:00:00.000000
 """
 from typing import Sequence, Union
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 revision: str = "20260528_0002"
-down_revision: Union[str, None] = "20260515_0001"
+down_revision: Union[str, None] = "20260525_0002"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -19,19 +19,6 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     op.add_column("scans", sa.Column("security_grade", sa.String(length=1), nullable=True))
     op.add_column("scans", sa.Column("total_score", sa.Numeric(4, 1), nullable=True))
-
-    op.create_table(
-        "snippets",
-        sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column("vuln_type", sa.String(length=50), nullable=False),
-        sa.Column("server_type", sa.String(length=20), nullable=False),
-        sa.Column("title", sa.String(length=200), nullable=False),
-        sa.Column("code", sa.Text(), nullable=False),
-        sa.Column("created_at", sa.DateTime(), nullable=False),
-        sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("vuln_type", "server_type", name="uq_snippets_vuln_server"),
-    )
-    op.create_index(op.f("ix_snippets_vuln_type"), "snippets", ["vuln_type"], unique=False)
 
     op.create_table(
         "vulnerabilities",
@@ -64,7 +51,5 @@ def downgrade() -> None:
     op.drop_index(op.f("ix_vulnerabilities_type"), table_name="vulnerabilities")
     op.drop_index(op.f("ix_vulnerabilities_scan_id"), table_name="vulnerabilities")
     op.drop_table("vulnerabilities")
-    op.drop_index(op.f("ix_snippets_vuln_type"), table_name="snippets")
-    op.drop_table("snippets")
     op.drop_column("scans", "total_score")
     op.drop_column("scans", "security_grade")

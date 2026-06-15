@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Column, DateTime, Numeric, String
+from sqlalchemy import Column, DateTime, ForeignKey, Numeric, String
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import relationship
 
@@ -12,6 +12,12 @@ class Scan(Base):
     __tablename__ = "scans"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     target_url = Column(String(500), nullable=False)
     domain = Column(String(255), nullable=False, index=True)
     status = Column(String(20), nullable=False, default="pending")
@@ -31,3 +37,5 @@ class Scan(Base):
         back_populates="scan",
         cascade="all, delete-orphan",
     )
+    user = relationship("User", back_populates="scans")
+    notification_logs = relationship("NotificationLog", back_populates="scan")

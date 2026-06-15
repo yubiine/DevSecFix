@@ -32,7 +32,7 @@ async def check_dns_token(domain: str, token: str) -> bool:
 
 
 async def check_file_token(domain: str, token: str) -> bool:
-    url = f"https://{domain}/devsecfix-{token}.txt"
+    url = f"https://{domain}/.well-known/devsecfix.txt"
     async with httpx.AsyncClient() as client:
         try:
             response = await client.get(url, timeout=5)
