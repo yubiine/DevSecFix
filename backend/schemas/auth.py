@@ -50,3 +50,11 @@ class LogoutRequest(BaseModel):
 
     model_config = ConfigDict(populate_by_name=True)
 
+
+class PasswordChangeRequest(BaseModel):
+    current_password: str = Field(..., alias="currentPassword")
+    new_password: str = Field(..., min_length=6, max_length=100, alias="newPassword")
+
+    model_config = ConfigDict(populate_by_name=True)
+
+

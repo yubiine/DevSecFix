@@ -7,7 +7,39 @@ function AccountPage() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [saved, setSaved] = useState(false);
-  const [passwordMessage, setPasswordMessage] = useState('');
+  
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState('');
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    setPasswordError('');
+    setPasswordSuccess('');
+
+    if (!currentPassword || !newPassword) {
+      setPasswordError('현재 비밀번호와 새 비밀번호를 모두 입력해 주세요.');
+      return;
+    }
+    if (newPassword.length < 6) {
+      setPasswordError('새 비밀번호는 최소 6자 이상이어야 합니다.');
+      return;
+    }
+
+    try {
+      await api.put('/auth/change-password', {
+        currentPassword,
+        newPassword,
+      });
+      setPasswordSuccess('비밀번호가 성공적으로 변경되었습니다.');
+      setCurrentPassword('');
+      setNewPassword('');
+    } catch (err) {
+      const errMsg = err.response?.data?.detail || '비밀번호 변경에 실패했습니다.';
+      setPasswordError(errMsg);
+    }
+  };
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -71,12 +103,15 @@ function AccountPage() {
           </article>
           <article className="settings-card account-form">
             <div className="setting-head"><div><span>보안</span><h2>비밀번호 관리</h2><p>계정을 안전하게 보호하기 위해 주기적으로 변경해 주세요.</p></div></div>
-            <div className="account-fields password-fields">
-              <label><span>현재 비밀번호</span><input type="password" placeholder="현재 비밀번호" /></label>
-              <label><span>새 비밀번호</span><input type="password" placeholder="새 비밀번호" /></label>
-            </div>
-            <button className="ghost-account-action" type="button" onClick={() => setPasswordMessage('비밀번호 변경 기능은 현재 지원하지 않습니다.')}>비밀번호 변경</button>
-            {passwordMessage && <p className="inline-alert">{passwordMessage}</p>}
+            <form onSubmit={handleChangePassword} style={{ width: '100%' }}>
+              <div className="account-fields password-fields">
+                <label><span>현재 비밀번호</span><input type="password" placeholder="현재 비밀번호" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} /></label>
+                <label><span>새 비밀번호</span><input type="password" placeholder="새 비밀번호" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} /></label>
+              </div>
+              <button className="ghost-account-action" type="submit" style={{ marginTop: '15px' }}>비밀번호 변경</button>
+              {passwordError && <p className="inline-alert" style={{ color: '#ff4d4f', marginTop: '10px' }}>{passwordError}</p>}
+              {passwordSuccess && <p className="inline-alert" style={{ color: '#2b8a3e', marginTop: '10px' }}>{passwordSuccess}</p>}
+            </form>
           </article>
         </div>
         <aside className="account-side">

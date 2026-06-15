@@ -32,6 +32,7 @@ from schemas.auth import (
     VerificationRequest,
     VerificationRequestResponse,
     LogoutRequest,
+    PasswordChangeRequest,
 )
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -165,6 +166,31 @@ async def logout(body: LogoutRequest, db: AsyncSession = Depends(get_db)):
         await db.commit()
 
     return {"message": "Logged out successfully"}
+
+
+@router.put("/change-password")
+async def change_password(
+    body: PasswordChangeRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    # 1. 현재 비밀번호 일치 여부를 비동기 스레드 풀에서 안전하게 검증
+    is_valid = await run_in_threadpool(verify_password, body.current_password, current_user.password_hash)
+    if not is_valid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="현재 비밀번호가 올바르지 않습니다.",
+        )
+
+    # 2. 새 비밀번호 해싱을 비동기 스레드 풀에서 안전하게 연산
+    hashed_pwd = await run_in_threadpool(hash_password, body.new_password)
+    
+    # 3. DB에 업데이트 및 커밋
+    current_user.password_hash = hashed_pwd
+    await db.commit()
+    
+    return {"message": "비밀번호가 성공적으로 변경되었습니다."}
+
 
 
 # --- 도메인 소유권 검증 API ---
