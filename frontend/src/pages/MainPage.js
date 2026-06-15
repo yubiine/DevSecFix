@@ -1,8 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import api from '../utils/api';
 import './MainPage.css';
-
-const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:8000';
 
 const steps = [
   { no: '1', title: 'CERTIFICATION', label: '도메인 인증', icon: '/ppt-icon-lock.png' },
@@ -32,6 +31,12 @@ function MainPage() {
   const [error, setError] = useState('');
   const [isScanning, setIsScanning] = useState(false);
   const [scanCount, setScanCount] = useState(1284);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const accessToken = localStorage.getItem('accessToken');
+    setIsLoggedIn(!!accessToken);
+  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => setScanCount((value) => value + 1), 3200);
@@ -39,16 +44,22 @@ function MainPage() {
   }, []);
 
   const domain = useMemo(() => normalizeDomain(targetUrl), [targetUrl]);
-  const verifiedDomains = useMemo(() => {
-    try {
-      return JSON.parse(localStorage.getItem('devsecfix:verifiedDomains') || '[]');
-    } catch {
-      return [];
-    }
-  }, []);
 
-  const isLocallyVerified = verifiedDomains.includes(domain);
-  const canDemoScan = domain === 'example.com';
+  const handleLogout = async () => {
+    try {
+      const refreshToken = localStorage.getItem('refreshToken');
+      if (refreshToken) {
+        await api.post('/auth/logout', { refreshToken });
+      }
+    } catch (err) {
+      console.error('서버 로그아웃 실패:', err);
+    } finally {
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      setIsLoggedIn(false);
+      navigate('/');
+    }
+  };
 
   const startScan = async () => {
     const cleanTarget = targetUrl.trim();
@@ -58,34 +69,33 @@ function MainPage() {
       return;
     }
 
-    setIsScanning(true);
-    setError('');
-
-    if (cleanDomain === 'example.com') {
-      const demoId = `demo-${Date.now()}`;
-      sessionStorage.setItem('devsecfix:lastTarget', cleanTarget);
-      setIsScanning(false);
-      navigate(`/scanning/${demoId}`);
+    if (!isLoggedIn) {
+      alert('보안 점검을 시작하려면 로그인이 필요합니다.');
+      navigate('/login');
       return;
     }
 
+    setIsScanning(true);
+    setError('');
+
     try {
-      const response = await fetch(`${API_BASE}/scan`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ targetUrl: cleanTarget }),
+      const response = await api.post('/scans', {
+        targetUrl: cleanTarget
       });
-      if (response.status === 403) {
-        setError('아직 인증되지 않은 도메인입니다. 도메인 인증을 먼저 진행해 주세요.');
-        return;
-      }
-      if (!response.ok) throw new Error('scan request failed');
-      const data = await response.json();
+      const data = response.data;
       navigate(`/scanning/${data.taskId}`);
-    } catch {
-      const demoId = `demo-${Date.now()}`;
-      sessionStorage.setItem('devsecfix:lastTarget', cleanTarget);
-      navigate(`/scanning/${demoId}`);
+    } catch (err) {
+      console.error('스캔 시작 실패:', err);
+      const status = err.response?.status;
+      const detail = err.response?.data?.detail;
+
+      if (status === 403) {
+        setError('아직 소유권 인증이 완료되지 않은 도메인입니다.');
+      } else if (status === 429) {
+        setError(detail || '일일 점검 횟수 한도를 초과했습니다.');
+      } else {
+        setError(detail || '점검 요청 처리 중 서버 오류가 발생했습니다.');
+      }
     } finally {
       setIsScanning(false);
     }
@@ -95,10 +105,15 @@ function MainPage() {
     <div className="product-shell">
       <header className="app-topbar art-nav">
         <button className="brand" type="button" onClick={() => navigate('/')}><span>DevSecFix</span></button>
-        <button className="service-entry" type="button" onClick={() => navigate('/login')}>로그인</button>
+        {isLoggedIn ? (
+          <button className="service-entry" type="button" onClick={handleLogout}>로그아웃</button>
+        ) : (
+          <button className="service-entry" type="button" onClick={() => navigate('/login')}>로그인</button>
+        )}
         <nav aria-label="주요 메뉴">
           <button type="button" className="is-active" onClick={() => navigate('/')}>스캔</button>
           <button type="button" onClick={() => navigate('/certify')}>도메인 인증</button>
+          {isLoggedIn && <button type="button" onClick={() => navigate('/dashboard')}>대시보드</button>}
           <button type="button" onClick={() => navigate('/result/demo')}>샘플 리포트</button>
         </nav>
       </header>
@@ -140,7 +155,7 @@ function MainPage() {
           </div>
 
           <div className={`notice-strip ${error ? 'has-error' : ''}`}>
-            <span>{error || (isLocallyVerified || canDemoScan ? `${domain || '선택한 도메인'}을 바로 스캔할 수 있습니다.` : '실제 도메인은 인증 후 안전하게 스캔할 수 있습니다.')}</span>
+            <span>{error || (isLoggedIn ? `${domain || '입력한 도메인'}을 바로 스캔할 수 있습니다.` : '로그인 후 인증된 도메인을 바로 스캔해 보세요.')}</span>
             <button type="button" onClick={() => navigate('/certify')}>도메인 인증하기 ›</button>
           </div>
 

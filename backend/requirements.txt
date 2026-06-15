@@ -15,3 +15,6 @@ pydantic-settings
 dnspython
 google-generativeai
 openai
+python-jose[cryptography]
+passlib[bcrypt]
+python-multipart

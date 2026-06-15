@@ -5,4 +5,6 @@ celery_app = Celery(
     "devsecfix",
     broker=settings.resolved_celery_broker_url,
     backend=settings.resolved_celery_result_backend,
+    include=["worker.tasks", "worker.beat"],
 )
+

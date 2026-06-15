@@ -22,7 +22,7 @@ class ScanSchedule(Base):
     __tablename__ = "scan_schedules"
     __table_args__ = (
         CheckConstraint(
-            "frequency IN ('daily', 'weekly')",
+            "frequency IN ('daily', 'weekly', 'monthly')",
             name="ck_scan_schedules_frequency",
         ),
         CheckConstraint(

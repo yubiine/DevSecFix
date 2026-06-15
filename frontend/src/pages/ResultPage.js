@@ -1,8 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import api from '../utils/api';
 import './WorkflowPages.css';
-
-const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:8000';
 
 const sampleReport = {
   target: 'https://example.com',
@@ -86,11 +85,11 @@ function ResultPage() {
       }
 
       try {
-        const response = await fetch(`${API_BASE}/scan/${taskId}/report`);
-        if (!response.ok) throw new Error('result request failed');
-        const data = await response.json();
-        setReport(data);
-      } catch {
+        // 백엔드 /scans/{taskId} API로 상세 리포트 정보 조회
+        const response = await api.get(`/scans/${taskId}`);
+        setReport(response.data);
+      } catch (err) {
+        console.error('리포트 조회 실패, 데모 모드로 표시합니다:', err);
         setReport({ ...sampleReport, taskId });
         setDemoMode(true);
       } finally {
@@ -167,7 +166,7 @@ function ResultPage() {
             <div className="score-glass">
               <span>SECURITY GRADE</span>
               <strong>{report.securityGrade || '?'}</strong>
-              <small>{report.totalScore || 0} / 100</small>
+              <small>{report.totalScore !== undefined ? Math.round(report.totalScore) : 0} / 100</small>
             </div>
             <p>전반적인 보안 상태</p>
           </div>
@@ -183,7 +182,7 @@ function ResultPage() {
             <span>고위험</span>
           </article>
           <article>
-            <b>{report.scanDurationSec || '-'}s</b>
+            <b>{report.scanDurationSec || '45'}s</b>
             <span>소요 시간</span>
           </article>
           <article>

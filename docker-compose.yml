@@ -85,5 +85,29 @@ services:
       redis:
         condition: service_healthy
 
+  beat:
+    build:
+      context: ./backend
+    container_name: devsecfix-beat
+    command: celery -A worker.tasks.celery_app beat --loglevel=info
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-devsecfix}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-devsecfix}
+      POSTGRES_DB: ${POSTGRES_DB:-devsecfix}
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-devsecfix}:${POSTGRES_PASSWORD:-devsecfix}@db:5432/${POSTGRES_DB:-devsecfix}
+      SYNC_DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-devsecfix}:${POSTGRES_PASSWORD:-devsecfix}@db:5432/${POSTGRES_DB:-devsecfix}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://redis:6379/0}
+      CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND:-redis://redis:6379/0}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+
 volumes:
   postgres_data:

@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from redis.asyncio import Redis
 
 from core.database import engine, settings
-from routers import auth, report, scan
+from routers import auth, report, scan, asset, dashboard, schedule, notification
 
 
 @asynccontextmanager
@@ -32,6 +32,10 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(scan.router)
 app.include_router(report.router)
+app.include_router(asset.router)
+app.include_router(dashboard.router)
+app.include_router(schedule.router)
+app.include_router(notification.router)
 
 
 @app.get("/health")

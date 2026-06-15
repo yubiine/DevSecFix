@@ -1,27 +1,70 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ServiceShell from '../components/ServiceShell';
+import api from '../utils/api';
 
 function AccountPage() {
   const navigate = useNavigate();
+  const [user, setUser] = useState(null);
   const [saved, setSaved] = useState(false);
   const [passwordMessage, setPasswordMessage] = useState('');
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await api.get('/auth/me');
+        setUser(response.data);
+      } catch (err) {
+        console.error('계정 정보 로드 실패:', err);
+      }
+    };
+    fetchUserData();
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      const refreshToken = localStorage.getItem('refreshToken');
+      if (refreshToken) {
+        await api.post('/auth/logout', { refreshToken });
+      }
+    } catch (err) {
+      console.error('서버 로그아웃 실패:', err);
+    } finally {
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      navigate('/login');
+    }
+  };
+
+  const getUserInitial = () => {
+    if (!user || !user.name) return 'EB';
+    return user.name.charAt(0).toUpperCase();
+  };
+
+  const getUserName = () => {
+    if (!user || !user.name) return '이은빈';
+    return user.name;
+  };
+
+  const getUserEmail = () => {
+    if (!user || !user.email) return 'team@devsecfix.com';
+    return user.email;
+  };
 
   return (
     <ServiceShell title="내 계정" description="프로필과 서비스 정보를 관리해요." mascot="/ppt-mascot-clipboard.png">
       <section className="account-layout">
         <div className="account-main">
           <article className="profile-overview">
-            <div className="profile-avatar">EB</div>
-            <div><span>PROFILE</span><h2>이은빈</h2><p>team@devsecfix.com</p></div>
+            <div className="profile-avatar">{getUserInitial()}</div>
+            <div><span>PROFILE</span><h2>{getUserName()}</h2><p>{getUserEmail()}</p></div>
             <b>사용자</b>
           </article>
           <article className="settings-card account-form">
             <div className="setting-head"><div><span>기본 정보</span><h2>프로필 설정</h2><p>서비스에서 사용할 이름과 연락처를 관리합니다.</p></div></div>
             <div className="account-fields">
-              <label><span>이름</span><input defaultValue="이은빈" /></label>
-              <label><span>이메일</span><input defaultValue="team@devsecfix.com" type="email" /></label>
-              <label><span>전화번호</span><input defaultValue="010-0000-0000" /></label>
+              <label><span>이름</span><input value={getUserName()} disabled /></label>
+              <label><span>이메일</span><input value={getUserEmail()} disabled type="email" /></label>
               <label><span>시간대</span><select defaultValue="seoul"><option value="seoul">Asia/Seoul</option></select></label>
             </div>
             <button className="save-setting" type="button" onClick={() => setSaved(true)}>{saved ? '변경사항이 저장됐어요' : '변경사항 저장'}</button>
@@ -32,22 +75,22 @@ function AccountPage() {
               <label><span>현재 비밀번호</span><input type="password" placeholder="현재 비밀번호" /></label>
               <label><span>새 비밀번호</span><input type="password" placeholder="새 비밀번호" /></label>
             </div>
-            <button className="ghost-account-action" type="button" onClick={() => setPasswordMessage('실제 비밀번호 변경은 로그인 API 연결 후 사용할 수 있어요.')}>비밀번호 변경</button>
+            <button className="ghost-account-action" type="button" onClick={() => setPasswordMessage('비밀번호 변경 기능은 현재 지원하지 않습니다.')}>비밀번호 변경</button>
             {passwordMessage && <p className="inline-alert">{passwordMessage}</p>}
           </article>
         </div>
         <aside className="account-side">
           <article className="workspace-summary">
-            <span>서비스 요약</span><strong>DevSecFix</strong><small>발표용 데모 계정</small>
+            <span>서비스 요약</span><strong>DevSecFix</strong><small>활성 계정 정보</small>
             <div><b>1</b><p>인증 도메인</p></div><div><b>3</b><p>알림 채널</p></div>
           </article>
           <article className="quick-account-menu">
             <h3>빠른 설정</h3>
             <button type="button" onClick={() => navigate('/notifications')}><img src="/ppt-icon-alert.png" alt="" /><span><strong>알림 수신 설정</strong><small>이메일 · Slack · 카카오워크</small></span><b>›</b></button>
-            <button type="button" onClick={() => navigate('/automation')}><img src="/ppt-icon-scan.png" alt="" /><span><strong>자동 스캔 일정</strong><small>매주 월요일 오전 9:00</small></span><b>›</b></button>
-            <button type="button" onClick={() => navigate('/certify')}><img src="/ppt-icon-lock.png" alt="" /><span><strong>도메인 관리</strong><small>example.com 인증됨</small></span><b>›</b></button>
+            <button type="button" onClick={() => navigate('/automation')}><img src="/ppt-icon-scan.png" alt="" /><span><strong>자동 스캔 일정</strong><small>주간 자동 스캔 설정</small></span><b>›</b></button>
+            <button type="button" onClick={() => navigate('/certify')}><img src="/ppt-icon-lock.png" alt="" /><span><strong>도메인 관리</strong><small>도메인 인증하기</small></span><b>›</b></button>
           </article>
-          <button className="logout-action" type="button" onClick={() => navigate('/login')}>로그아웃</button>
+          <button className="logout-action" type="button" onClick={handleLogout}>로그아웃</button>
         </aside>
       </section>
     </ServiceShell>
@@ -55,3 +98,4 @@ function AccountPage() {
 }
 
 export default AccountPage;
+

@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import api from '../utils/api';
 import '../pages/SubscriptionPages.css';
 
 const items = [
@@ -13,6 +14,39 @@ const items = [
 function ServiceShell({ children, title, description, mascot = '/ppt-mascot-point.png', action }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        navigate('/login');
+        return;
+      }
+      try {
+        const response = await api.get('/auth/me');
+        setUser(response.data);
+      } catch (err) {
+        console.error('세션 검증 실패:', err);
+        // api.js 인터셉터가 토큰 갱신 실패 시 이미 로그인창으로 보내주지만 안전장치로 추가
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        navigate('/login');
+      }
+    };
+    fetchUser();
+  }, [navigate]);
+
+  // 이름 첫 글자 따기 (예: "이은빈" -> "이", "Test User" -> "T")
+  const getUserInitial = () => {
+    if (!user || !user.name) return 'EB';
+    return user.name.charAt(0).toUpperCase();
+  };
+
+  const getUserDisplayName = () => {
+    if (!user || !user.name) return '은빈 님';
+    return `${user.name} 님`;
+  };
 
   return (
     <div className="product-shell service-page">
@@ -21,7 +55,7 @@ function ServiceShell({ children, title, description, mascot = '/ppt-mascot-poin
         <div className="service-account">
           <button type="button" onClick={() => navigate('/')}>수동 스캔</button>
           <button type="button" className={`account-chip ${location.pathname === '/account' ? 'active' : ''}`} onClick={() => navigate('/account')} title="내 계정">
-            <span>EB</span><strong>은빈 님</strong>
+            <span>{getUserInitial()}</span><strong>{getUserDisplayName()}</strong>
           </button>
         </div>
       </header>
@@ -50,3 +84,4 @@ function ServiceShell({ children, title, description, mascot = '/ppt-mascot-poin
 }
 
 export default ServiceShell;
+

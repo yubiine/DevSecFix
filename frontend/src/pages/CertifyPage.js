@@ -1,16 +1,10 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import api from '../utils/api';
 import './WorkflowPages.css';
-
-const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:8000';
 
 function normalizeDomain(value) {
   return value.trim().replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0].split(':')[0];
-}
-
-function saveVerifiedDomain(domain) {
-  const previous = JSON.parse(localStorage.getItem('devsecfix:verifiedDomains') || '[]');
-  localStorage.setItem('devsecfix:verifiedDomains', JSON.stringify(Array.from(new Set([...previous, domain]))));
 }
 
 function CertifyPage() {
@@ -24,6 +18,14 @@ function CertifyPage() {
   const domain = useMemo(() => normalizeDomain(domainInput), [domainInput]);
   const fileUrl = `https://${domain || 'your-domain.com'}/.well-known/devsecfix.txt`;
 
+  // 세션 가드
+  useEffect(() => {
+    const accessToken = localStorage.getItem('accessToken');
+    if (!accessToken) {
+      navigate('/login');
+    }
+  }, [navigate]);
+
   const requestVerification = async () => {
     if (!domain) {
       setMessage('인증할 도메인을 입력해 주세요.');
@@ -32,19 +34,16 @@ function CertifyPage() {
     setLoading(true);
     setMessage('');
     try {
-      const response = await fetch(`${API_BASE}/auth/verify/request`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ domain, method }),
+      const response = await api.post('/auth/verify/request', {
+        domain,
+        method
       });
-      if (!response.ok) throw new Error('verification request failed');
-      const data = await response.json();
-      setToken(data.token);
-    } catch {
-      setToken(`devsecfix-verify=${Math.random().toString(36).slice(2, 12)}`);
-      setMessage('데모 환경용 인증 토큰을 발급했습니다.');
-    } finally {
+      setToken(response.data.token);
       setStep(2);
+    } catch (err) {
+      console.error(err);
+      setMessage(err.response?.data?.detail || '인증 토큰 발급에 실패했습니다.');
+    } finally {
       setLoading(false);
     }
   };
@@ -53,17 +52,22 @@ function CertifyPage() {
     setLoading(true);
     setMessage('');
     try {
-      const response = await fetch(`${API_BASE}/auth/verify/confirm`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ domain }),
+      // 1. 소유권 확인 API 호출
+      await api.post('/auth/verify/confirm', {
+        domain,
+        method
       });
-      if (!response.ok) throw new Error('verification confirm failed');
-    } catch {
-      setMessage('데모 환경에서는 인증 완료 상태로 진행합니다.');
-    } finally {
-      saveVerifiedDomain(domain);
+
+      // 2. 자산 등록 API 호출
+      await api.post('/assets', {
+        domain
+      });
+
       setStep(3);
+    } catch (err) {
+      console.error(err);
+      setMessage(err.response?.data?.detail || '소유권 인증 및 자산 등록에 실패했습니다. DNS TXT 설정을 확인하세요.');
+    } finally {
       setLoading(false);
     }
   };
@@ -72,7 +76,11 @@ function CertifyPage() {
     <div className="product-shell workflow-shell certify-shell">
       <header className="app-topbar">
         <button className="brand" type="button" onClick={() => navigate('/')}><span>DevSecFix</span></button>
-        <nav aria-label="주요 메뉴"><button type="button" onClick={() => navigate('/')}>스캔</button><button type="button" onClick={() => navigate('/dashboard')}>대시보드</button><button type="button" className="is-active">도메인 인증</button></nav>
+        <nav aria-label="주요 메뉴">
+          <button type="button" onClick={() => navigate('/')}>스캔</button>
+          <button type="button" onClick={() => navigate('/dashboard')}>대시보드</button>
+          <button type="button" className="is-active">도메인 인증</button>
+        </nav>
       </header>
       <main className="workflow-layout">
         <section className="workflow-card certify-card">

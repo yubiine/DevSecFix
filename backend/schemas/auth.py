@@ -26,3 +26,27 @@ class VerificationInstruction(BaseModel):
     method: str
     token: str
     is_verified: bool
+
+
+class RegisterRequest(BaseModel):
+    email: str = Field(..., max_length=255)
+    password: str = Field(..., min_length=6, max_length=100)
+    name: str = Field(..., min_length=1, max_length=100)
+
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+
+class RefreshRequest(BaseModel):
+    refresh_token: str = Field(..., alias="refreshToken")
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class LogoutRequest(BaseModel):
+    refresh_token: str = Field(..., alias="refreshToken")
+
+    model_config = ConfigDict(populate_by_name=True)
+

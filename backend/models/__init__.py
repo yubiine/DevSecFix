@@ -5,6 +5,7 @@ from models.snippet import Snippet
 from models.user import User
 from models.verification import Verification
 from models.vulnerability import Vulnerability
+from models.invalidated_token import InvalidatedToken
 
 __all__ = [
     "NotificationLog",
@@ -15,4 +16,5 @@ __all__ = [
     "User",
     "Verification",
     "Vulnerability",
+    "InvalidatedToken",
 ]

@@ -78,7 +78,7 @@ def upgrade() -> None:
         sa.Column("created_at", sa.DateTime(), nullable=False),
         sa.Column("updated_at", sa.DateTime(), nullable=False),
         sa.CheckConstraint(
-            "frequency IN ('daily', 'weekly')",
+            "frequency IN ('daily', 'weekly', 'monthly')",
             name="ck_scan_schedules_frequency",
         ),
         sa.CheckConstraint(
