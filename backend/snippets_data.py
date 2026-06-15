@@ -105,7 +105,7 @@ server {
 
     # X-Content-Type-Options 없음
     {
-        "vuln_type": "missing_x_content_type_options",
+        "vuln_type": "missing_x_content_type",
         "severity": "medium",
         "cvss_score": 4.3,
         "server_type": "nginx",
@@ -118,7 +118,7 @@ server {
         "reference_url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options",
     },
     {
-        "vuln_type": "missing_x_content_type_options",
+        "vuln_type": "missing_x_content_type",
         "severity": "medium",
         "cvss_score": 4.3,
         "server_type": "apache",
@@ -302,7 +302,7 @@ server {
 
     # Server 헤더 노출
     {
-        "vuln_type": "exposed_server",
+        "vuln_type": "server_info_leaked",
         "severity": "low",
         "cvss_score": 3.1,
         "server_type": "nginx",
@@ -315,7 +315,7 @@ http {
         "reference_url": "https://nginx.org/en/docs/http/ngx_http_core_module.html#server_tokens",
     },
     {
-        "vuln_type": "exposed_server",
+        "vuln_type": "server_info_leaked",
         "severity": "low",
         "cvss_score": 3.1,
         "server_type": "apache",
@@ -418,7 +418,7 @@ service iptables save""",
 
     # SSH (22번 포트)
     {
-        "vuln_type": "open_ssh",
+        "vuln_type": "exposed_ssh_port",
         "severity": "medium",
         "cvss_score": 5.3,
         "server_type": "linux",
@@ -454,132 +454,34 @@ service iptables save""",
         "reference_url": "https://www.ssh.com/academy/ssh/telnet",
     },
 
-    # MySQL (3306번 포트)
+    # DB 포트 외부 노출 차단 (MySQL, PostgreSQL, Redis, MongoDB, Elasticsearch 등)
     {
-        "vuln_type": "open_db",
-        "severity": "high",
+        "vuln_type": "exposed_db_port",
+        "severity": "critical",
         "cvss_score": 9.8,
         "server_type": "linux",
-        "title": "MySQL 외부 접근 차단",
-        "code": """# 외부에서 MySQL 접근 차단
+        "title": "데이터베이스 포트 외부 접근 차단 (iptables)",
+        "code": """# 1. MySQL (3306) 외부 접근 차단
 iptables -A INPUT -p tcp --dport 3306 -j DROP
 
-# 로컬호스트만 허용
-iptables -A INPUT -p tcp --dport 3306 -s 127.0.0.1 -j ACCEPT
-iptables -A INPUT -p tcp --dport 3306 -j DROP
-
-# MySQL 설정에서도 바인딩 제한 (/etc/mysql/mysql.conf.d/mysqld.cnf)
-# bind-address = 127.0.0.1""",
-        "description": "MySQL DB가 외부에 노출되면 데이터 유출 및 무단 접근 위험이 있습니다. 즉시 차단하세요.",
-        "reference_url": "https://dev.mysql.com/doc/refman/8.0/en/security-guidelines.html",
-    },
-
-    # PostgreSQL (5432번 포트)
-    {
-        "vuln_type": "open_db",
-        "severity": "high",
-        "cvss_score": 9.8,
-        "server_type": "linux",
-        "title": "PostgreSQL 외부 접근 차단",
-        "code": """# 외부에서 PostgreSQL 접근 차단
+# 2. PostgreSQL (5432) 외부 접근 차단
 iptables -A INPUT -p tcp --dport 5432 -j DROP
 
-# 로컬호스트만 허용
-iptables -A INPUT -p tcp --dport 5432 -s 127.0.0.1 -j ACCEPT
-iptables -A INPUT -p tcp --dport 5432 -j DROP
-
-# PostgreSQL 설정에서도 바인딩 제한 (postgresql.conf)
-# listen_addresses = 'localhost'""",
-        "description": "PostgreSQL DB가 외부에 노출되면 데이터 유출 및 무단 접근 위험이 있습니다. 즉시 차단하세요.",
-        "reference_url": "https://www.postgresql.org/docs/current/auth-pg-hba-conf.html",
-    },
-
-    # Redis (6379번 포트)
-    {
-        "vuln_type": "open_db",
-        "severity": "high",
-        "cvss_score": 9.8,
-        "server_type": "linux",
-        "title": "Redis 외부 접근 차단",
-        "code": """# 외부에서 Redis 접근 차단
+# 3. Redis (6379) 외부 접근 차단
 iptables -A INPUT -p tcp --dport 6379 -j DROP
 
-# Redis 설정에서도 바인딩 제한 (/etc/redis/redis.conf)
-# bind 127.0.0.1
-# requirepass 강력한패스워드""",
-        "description": "Redis가 외부에 노출되면 인증 없이 모든 데이터에 접근 가능합니다. 즉시 차단하세요.",
-        "reference_url": "https://redis.io/docs/manual/security/",
-    },
-
-    # MongoDB (27017번 포트)
-    {
-        "vuln_type": "open_db",
-        "severity": "high",
-        "cvss_score": 9.8,
-        "server_type": "linux",
-        "title": "MongoDB 외부 접근 차단",
-        "code": """# 외부에서 MongoDB 접근 차단
+# 4. MongoDB (27017) 외부 접근 차단
 iptables -A INPUT -p tcp --dport 27017 -j DROP
 
-# MongoDB 설정에서도 바인딩 제한 (/etc/mongod.conf)
-# net:
-#   bindIp: 127.0.0.1""",
-        "description": "MongoDB가 외부에 노출되면 인증 없이 데이터베이스에 접근 가능합니다. 즉시 차단하세요.",
-        "reference_url": "https://www.mongodb.com/docs/manual/administration/security-checklist/",
-    },
-
-    # RDP (3389번 포트)
-    {
-        "vuln_type": "open_rdp",
-        "severity": "high",
-        "cvss_score": 9.8,
-        "server_type": "linux",
-        "title": "RDP 포트 차단",
-        "code": """# 외부에서 RDP 접근 차단
-iptables -A INPUT -p tcp --dport 3389 -j DROP
-
-# 특정 IP만 허용하려면
-# iptables -A INPUT -p tcp --dport 3389 -s 허용할IP -j ACCEPT
-# iptables -A INPUT -p tcp --dport 3389 -j DROP
-
-# 설정 저장
-service iptables save""",
-        "description": "RDP가 외부에 노출되면 무차별 대입 공격 및 원격 코드 실행 취약점에 노출됩니다.",
-        "reference_url": "https://learn.microsoft.com/en-us/troubleshoot/windows-server/remote/set-up-remote-desktop-listener-port",
-    },
-
-    # VNC (5900번 포트)
-    {
-        "vuln_type": "open_vnc",
-        "severity": "high",
-        "cvss_score": 8.8,
-        "server_type": "linux",
-        "title": "VNC 포트 차단",
-        "code": """# 외부에서 VNC 접근 차단
-iptables -A INPUT -p tcp --dport 5900 -j DROP
-
-# VNC 사용이 필요하면 SSH 터널링 사용 권장
-# ssh -L 5900:localhost:5900 user@server
-# 그 후 localhost:5900 으로 접속""",
-        "description": "VNC가 외부에 노출되면 원격 데스크탑이 무단으로 접근될 수 있습니다.",
-        "reference_url": "https://www.realvnc.com/en/connect/docs/security.html",
-    },
-
-    # Elasticsearch (9200번 포트)
-    {
-        "vuln_type": "open_db",
-        "severity": "high",
-        "cvss_score": 9.8,
-        "server_type": "linux",
-        "title": "Elasticsearch 외부 접근 차단",
-        "code": """# 외부에서 Elasticsearch 접근 차단
+# 5. Elasticsearch (9200) 외부 접근 차단
 iptables -A INPUT -p tcp --dport 9200 -j DROP
-iptables -A INPUT -p tcp --dport 9300 -j DROP
 
-# Elasticsearch 설정에서도 바인딩 제한 (elasticsearch.yml)
-# network.host: 127.0.0.1""",
-        "description": "Elasticsearch가 외부에 노출되면 인증 없이 모든 데이터에 접근 가능합니다. 즉시 차단하세요.",
-        "reference_url": "https://www.elastic.co/guide/en/elasticsearch/reference/current/security-minimal-setup.html",
+# * 설정 저장 (CentOS/RHEL)
+# service iptables save
+# * 설정 저장 (Ubuntu)
+# netfilter-persistent save""",
+        "description": "데이터베이스 포트가 외부에 노출되면 무단 데이터 접근 및 탈취 위험이 있습니다. 즉시 차단하세요.",
+        "reference_url": "https://dev.mysql.com/doc/refman/8.0/en/security-guidelines.html",
     },
 # =====================
     # SSL/TLS 취약점 스니펫
@@ -642,7 +544,7 @@ server {
 
     # 인증서 만료
     {
-        "vuln_type": "cert_expired",
+        "vuln_type": "expired_certificate",
         "severity": "high",
         "cvss_score": 7.4,
         "server_type": "nginx",
@@ -660,7 +562,7 @@ certbot renew
         "reference_url": "https://certbot.eff.org/",
     },
     {
-        "vuln_type": "cert_expired",
+        "vuln_type": "expired_certificate",
         "severity": "high",
         "cvss_score": 7.4,
         "server_type": "apache",
@@ -718,7 +620,7 @@ certbot renew --force-renewal
 
     # 취약한 TLS 버전
     {
-        "vuln_type": "weak_protocol",
+        "vuln_type": "weak_tls_protocol",
         "severity": "high",
         "cvss_score": 7.4,
         "server_type": "nginx",
@@ -738,7 +640,7 @@ server {
         "reference_url": "https://nginx.org/en/docs/http/ngx_http_ssl_module.html",
     },
     {
-        "vuln_type": "weak_protocol",
+        "vuln_type": "weak_tls_protocol",
         "severity": "high",
         "cvss_score": 7.4,
         "server_type": "apache",
@@ -792,7 +694,7 @@ server {
 
     # 자체 서명 인증서
     {
-        "vuln_type": "self_signed_cert",
+        "vuln_type": "self_signed_certificate",
         "severity": "high",
         "cvss_score": 6.8,
         "server_type": "nginx",
@@ -810,7 +712,7 @@ echo "0 0 * * * certbot renew --quiet" | crontab -""",
         "reference_url": "https://certbot.eff.org/",
     },
     {
-        "vuln_type": "self_signed_cert",
+        "vuln_type": "self_signed_certificate",
         "severity": "high",
         "cvss_score": 6.8,
         "server_type": "apache",
