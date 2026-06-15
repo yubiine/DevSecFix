@@ -5,6 +5,8 @@ services:
     container_name: devsecfix-frontend
     ports:
       - "${FRONTEND_PORT:-3000}:3000"
+    environment:
+      - REACT_APP_API_BASE=${REACT_APP_API_BASE:-http://localhost:8000}
     depends_on:
       - backend
 
