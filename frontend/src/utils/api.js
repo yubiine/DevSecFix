@@ -49,6 +49,11 @@ api.interceptors.response.use(
 
     // 401 Unauthorized 에러 발생 시 처리 로직
     if (response && response.status === 401) {
+      // 로그인, 회원가입 요청은 401 발생 시 토큰 갱신 처리를 거치지 않고 바로 에러 반환
+      if (config && config.url && (config.url.includes('/auth/login') || config.url.includes('/auth/register'))) {
+        return Promise.reject(error);
+      }
+
       // originalRequest._retry 속성으로 무한 루프 방지 (한 번만 재시도)
       if (!originalRequest._retry) {
         
